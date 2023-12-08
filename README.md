@@ -14,7 +14,7 @@ a canary distribution for developers that provides access to upcoming features.
 
 ## Getting Started
 
-Clone the template-snap repository [using this template](https://github.com/MetaMask/template-snap-monorepo/generate)
+Clone the airstack snap repository [using this template](https://github.com/MetaMask/template-snap-monorepo/generate)
 and set up the development environment:
 
 ```shell
