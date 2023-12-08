@@ -76,7 +76,7 @@ const data = "0x"
     const wallet = connectedAccount as [];
 
     /**
-     * Uniswap V2 router : 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+     * Uniswap V2 router contract : 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
      */
     if (wallet.length > 0) {
       console.log('wallet ', wallet.at(0));
