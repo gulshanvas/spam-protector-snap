@@ -823,7 +823,7 @@ export const onTransaction: OnTransactionHandler = async ({
   if (tokenTranferConnect) {
     finalStatus = statuses[1];
     descriptions.push(
-      text(`${RIGHT_GREEN_SYMBOL} Previous transfer histroy present `),
+      text(`${RIGHT_GREEN_SYMBOL} Previous transfer history present `),
     );
   }
 
@@ -865,12 +865,15 @@ export const onTransaction: OnTransactionHandler = async ({
       text(`${RIGHT_GREEN_SYMBOL} You both follow each other`)
     )
   }
-    // insightPanel.push(row("text something : ", text("good")));
 
+  const isNonVirtualPoapAttended = checkIfNonVirtualPOAPAttended(data.data['hasPoaps']['Poap']);
+
+  if (isNonVirtualPoapAttended) {
+        descriptions.push(
+          text(`${RIGHT_GREEN_SYMBOL} Receiver has non virtual POAP`),
+        );
+  }
     console.log('data returned ', JSON.stringify(data));
-
-  const socialFollowingName =
-    data.data['hasSocialFollowing'].socialFollowings.Following[0].dappName;
 
   insightPanel.push(heading(`Status : ${finalStatus}`));
   insightPanel.push(divider());
@@ -879,6 +882,7 @@ export const onTransaction: OnTransactionHandler = async ({
    const description = descriptions[i]
     insightPanel.push(description);
   }
+
   return {
     content: panel(insightPanel),
     // severity: SeverityLevel.Critical,
@@ -1067,15 +1071,30 @@ const hasPrimaryENS = (
   return false;
 }
 
+const checkIfNonVirtualPOAPAttended = (
+  poap: any
+) => {
 
+  let isNonVirtualPoapAttended = false;
+  const poapsData = poap;
 
+  if (!poapsData) {
+    return isNonVirtualPoapAttended;
+  }
 
+    for (let i = 0; i < poapsData.length; i++) {
+      const poap = poapsData[i];
+      const poapEvent = poap['poapEvent'];
+      if (!poapEvent.isVirtualEvent) {
+        console.log('poap : ', poap);
+        console.log('attended non virtual event');
+        isNonVirtualPoapAttended = true;
+        break;
+      }
+    }
 
-// const checkIfNonVirtualPOAPAttended = (
-//   POAPsOwnedByAddress
-// ) => {
-
-// }
+  return isNonVirtualPoapAttended;
+}
 
 // import { OnTransactionHandler } from '@metamask/snaps-types';
 // import { panel, heading, text } from '@metamask/snaps-ui';
