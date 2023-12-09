@@ -375,6 +375,85 @@ export const onTransaction: OnTransactionHandler = async ({
       }
     }
   }
+
+      ethereumFromTokenTransfer: TokenTransfers(
+    input: { filter: { from: { _in: ["vitalik.eth"] } }, blockchain: ethereum }
+  ) {
+    TokenTransfer {
+      from {
+        addresses
+        domains {
+          name
+        }
+        socials {
+          dappName
+          profileName
+          profileTokenId
+          profileTokenIdHex
+          userId
+          userAssociatedAddresses
+        }
+      }
+      to {
+        addresses
+        domains {
+          name
+        }
+        socials {
+          dappName
+          profileName
+          profileTokenId
+          profileTokenIdHex
+          userId
+          userAssociatedAddresses
+        }
+      }
+      transactionHash
+    }
+    pageInfo {
+      nextCursor
+      prevCursor
+    }
+  }
+  polygonFromTokenTransfer: TokenTransfers(
+    input: { filter: { from: { _in: ["vitalik.eth"] } }, blockchain: polygon }
+  ) {
+    TokenTransfer {
+      from {
+        addresses
+        domains {
+          name
+        }
+        socials {
+          dappName
+          profileName
+          profileTokenId
+          profileTokenIdHex
+          userId
+          userAssociatedAddresses
+        }
+      }
+      to {
+        addresses
+        domains {
+          name
+        }
+        socials {
+          dappName
+          profileName
+          profileTokenId
+          profileTokenIdHex
+          userId
+          userAssociatedAddresses
+        }
+      }
+      transactionHash
+    }
+    pageInfo {
+      nextCursor
+      prevCursor
+    }
+  }
   
   hasCommonFollowersLensOrFarcaster: SocialFollowers(
     input: {
@@ -710,14 +789,7 @@ export const onTransaction: OnTransactionHandler = async ({
     },
     body: JSON.stringify({ query: allEOADynamicQuery }),
   };
-  // const request = new Request(url, options);
 
-  // console.log("request ", request.body());
-  // console.log('request ', request);
-
-  // const data = await fetch(request).then((response) => {
-  //   return response.json();
-  // });
   const data = await fetch(url, {
     method: 'POST',
     headers: {
@@ -768,6 +840,31 @@ export const onTransaction: OnTransactionHandler = async ({
       finalStatus = statuses[2]
     }
   }
+
+  const doesReceiverHasStrongTransferHistory =
+    checkIfReceiverHasStronglTransferHistory(data);
+  
+  const ethereumFromTokenTransfer = data.data['ethereumFromTokenTransfer'];
+  const polygonFromTokenTransfer = data.data['polygonFromTokenTransfer'];
+
+  console.log('ethereumFromTokenTransfer ', ethereumFromTokenTransfer);
+  console.log('polygonFromTokenTransfer ', polygonFromTokenTransfer);
+
+  if (doesReceiverHasStrongTransferHistory) {
+    descriptions.push(
+      text(`${RIGHT_GREEN_SYMBOL} Receivers has strong transfer history `),
+    );
+  }
+
+  const doesBothUserStronglyFollowsEachOther =
+    doesBothUserStronglyFollowEachOther(data);
+  
+  if (doesBothUserStronglyFollowsEachOther) {
+    console.log("test test")
+    descriptions.push(
+      text(`${RIGHT_GREEN_SYMBOL} You both follow each other`)
+    )
+  }
     // insightPanel.push(row("text something : ", text("good")));
 
     console.log('data returned ', JSON.stringify(data));
@@ -804,7 +901,54 @@ const checkIfAlreadyTransferHistroyBetweenFromTo = (
   ethereumTokenTransfer: any,
   polygonTokenTransfer: any,
 ) => {
-  return ethereumTokenTransfer.TokenTransfer.length || polygonTokenTransfer.TokenTransfer.length;
+  return ethereumTokenTransfer?.TokenTransfer?.length || polygonTokenTransfer?.TokenTransfer?.length;
+
+}
+
+const checkIfToAddressHasTransferHistory = (
+  ethereumFromTransferHistory: any,
+  polygonFromTransferHistory: any,
+) => {
+  return (
+    ethereumFromTransferHistory?.TokenTransfer?.length ||
+    polygonFromTransferHistory?.TokenTransfer?.length
+  );
+
+}
+
+const doesBothUserFollowEachOther = (
+  socialFollowing: any
+) => {
+  const following = socialFollowing['Following'];
+
+  if (!following) {
+    return false;
+  }
+  
+  return following.length > 0;
+}
+
+const doesBothUserStronglyFollowEachOther = (
+  data : any
+) => {
+  const isCommonPOAPEventsAttended = commonPOAPEventsAttended(data);
+  const doesUserHasLensProfile = hasLensProfile(data.data['hasLens']);
+  const doesUserHasFarcasterProfile = hasFarCasterAccount(
+    data.data['hasFarcaster'],
+  );
+  const doesUserHasPrimaryENS = hasPrimaryENS(data.data['hasPrimaryENS']);
+
+  const isFromUserFollowsTo = doesBothUserFollowEachOther(
+    data.data['hasSocialFollowing']['socialFollowings'],
+  );
+
+  return (
+    isFromUserFollowsTo &&
+    (isCommonPOAPEventsAttended ||
+      doesUserHasLensProfile ||
+      doesUserHasFarcasterProfile ||
+      doesUserHasPrimaryENS)
+  );
 
 }
 
@@ -831,15 +975,99 @@ const commonFollowersOnLensAndFascaster = (
 
 }
 
-const checkIfUserStronglyFollowsOther = (data) => {
-  //
+const checkIfReceiverHasStronglTransferHistory = (data:any) => {
+  // 
+  const isCommonPOAPEventsAttended = commonPOAPEventsAttended(data);
+  const doesUserHasLensProfile = hasLensProfile(data.data['hasLens']);
+  const doesUserHasFarcasterProfile = hasFarCasterAccount(
+    data.data['hasFarcaster'],
+  );
+  const doesUserHasPrimaryENS = hasPrimaryENS(data.data['hasPrimaryENS']);
+
+
+  const doesToUserHasTransferHistory = checkIfToAddressHasTransferHistory(
+    data.data['ethereumFromTokenTransfer'],
+    data.data['polygonFromTokenTransfer'],
+  );
+
+  return (
+    doesToUserHasTransferHistory &&
+    (isCommonPOAPEventsAttended ||
+      doesUserHasLensProfile ||
+      doesUserHasFarcasterProfile ||
+      doesUserHasPrimaryENS)
+  );
+
 }
 
-const commonPOAPEventsAttended = () => {
+const commonPOAPEventsAttended = (data: any) => {
+    const commonPOAPs = data.data['hasCommonPoaps']['Poap'];
+
+  if (commonPOAPs) {
+    return false;
+  }
+
+    for (let i = 0; i < commonPOAPs.length; i++) {
+      const poap = commonPOAPs[i];
+      const isEventPresent = poap['poapEvent']['poaps'];
+      console.log('isEventPresent ', isEventPresent);
+      if (isEventPresent) {
+        console.log('event present');
+        return true;
+      }
+    }
   
+  return false;
+
 }
 
-const hasLensProfile = () => {};
+const hasLensProfile = (lensData: any) => {
+    // const socialProfile = data.data['hasLens'];
+
+    const lensProfile = lensData['Social'];
+
+    if (!lensProfile) {
+      return false;
+    }
+
+    if (lensProfile.length > 0) {
+      return true;
+    }
+  
+  return false;
+ };
+
+const hasFarCasterAccount = (farcasterData: any) => {
+  const farcasterProfile = farcasterData['Social'];
+
+  if (!farcasterProfile) {
+    return false;
+  }
+
+  if (farcasterProfile.length > 0) {
+    return true;
+  }
+
+  return false;
+};
+
+const hasPrimaryENS = (
+  ensData: any
+) => {
+  const ensDomainInfo = ensData['Domain'];
+
+  if (!ensDomainInfo) {
+    return false;
+  }
+
+  if (ensDomainInfo.length > 0) {
+    return true;
+  }
+
+  return false;
+}
+
+
 
 
 
