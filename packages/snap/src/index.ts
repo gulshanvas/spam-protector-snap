@@ -7,6 +7,7 @@ import {
   STATUS,
   SUCCESS_MESSAGES_TO_USER,
   FAILURE_MESSAGES_TO_USER,
+  AIRSTACK_URL,
 } from './constants';
 
 const airstack = require('@airstack/node');
@@ -70,9 +71,8 @@ export const onTransaction: OnTransactionHandler = async ({
     to: transaction.to,
   };
 
-  const url = 'https://api.airstack.xyz/gql';
 
-  const data = await fetch(url, {
+  const data = await fetch(AIRSTACK_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -27,3 +27,6 @@ export const FAILURE_MESSAGES_TO_USER = {
 };
 
 
+export const AIRSTACK_URL = 'https://api.airstack.xyz/gql';
+
+
