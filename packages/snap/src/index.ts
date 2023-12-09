@@ -83,30 +83,6 @@ export const onTransaction: OnTransactionHandler = async ({
   //     console.log('error:', error);
 
   const from = '';
-  const query = `query isFollowing { # Top-level is User B's Identity (ipeciura.eth)
-  Wallet(input: {identity: "ipeciura.eth", blockchain: ethereum}) {
-    socialFollowings( # Here is User A's Identity (betashop.eth)
-      input: {filter: {identity: {_in: ["betashop.eth"]}}}
-    ) {
-      Following {
-        dappName
-        dappSlug
-        followingProfileId
-        followerProfileId
-        followerAddress {
-          addresses
-          socials {
-            dappName
-            profileName
-          }
-          domains {
-            name
-          }
-        }
-      }
-    }
-  }
-}`;
 
   const driveFrom = 'betashop.eth';
   const driveTo = 'ipeciura.eth';
@@ -117,6 +93,11 @@ export const onTransaction: OnTransactionHandler = async ({
     from: driveFrom,
     to: driveTo,
   };
+
+  // const variables = {
+  //   from: transaction.from,
+  //   to: transaction.to,
+  // };
 
   const allEOADynamicQuery = `query AllEOAQuery($from: Identity!, $to: Identity!)  { # Top-level is User B's Identity (ipeciura.eth)
   hasSocialFollowing: Wallet(input: {identity: $to, blockchain: ethereum}) {
@@ -276,7 +257,7 @@ export const onTransaction: OnTransactionHandler = async ({
   hasPrimaryENS: Domains(
     input: {
       filter: {
-        owner: { _in: ["0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"] }
+        owner: { _in: [$to] }
         isPrimary: { _eq: true }
       }
       blockchain: ethereum
@@ -294,7 +275,7 @@ export const onTransaction: OnTransactionHandler = async ({
     input: {
       filter: {
         dappName: { _eq: lens }
-        identity: { _in: ["0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"] }
+        identity: { _in: [$to] }
       }
       blockchain: ethereum
     }
@@ -310,7 +291,7 @@ export const onTransaction: OnTransactionHandler = async ({
     input: {
       filter: {
         dappName: { _eq: farcaster }
-        identity: { _in: ["0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"] }
+        identity: { _in: [$to] }
       }
       blockchain: ethereum
     }
@@ -325,7 +306,7 @@ export const onTransaction: OnTransactionHandler = async ({
   
   hasPoaps: Poaps(
     input: {
-      filter: { owner: { _in: ["vitalik.eth"] } }
+      filter: { owner: { _in: [$to] } }
       blockchain: ALL
       limit: 50
     }
@@ -377,7 +358,7 @@ export const onTransaction: OnTransactionHandler = async ({
   }
 
       ethereumFromTokenTransfer: TokenTransfers(
-    input: { filter: { from: { _in: ["vitalik.eth"] } }, blockchain: ethereum }
+    input: { filter: { from: { _in: [$to] } }, blockchain: ethereum }
   ) {
     TokenTransfer {
       from {
@@ -416,7 +397,7 @@ export const onTransaction: OnTransactionHandler = async ({
     }
   }
   polygonFromTokenTransfer: TokenTransfers(
-    input: { filter: { from: { _in: ["vitalik.eth"] } }, blockchain: polygon }
+    input: { filter: { from: { _in: [$to] } }, blockchain: polygon }
   ) {
     TokenTransfer {
       from {
@@ -816,7 +797,7 @@ export const onTransaction: OnTransactionHandler = async ({
     2: 'Strongly Connected',
   };
 
-  let finalStatus;
+  let finalStatus = statuses[0];
 
   let descriptions = [];
   let insightPanel = [];
@@ -828,7 +809,7 @@ export const onTransaction: OnTransactionHandler = async ({
   }
 
   const commonFollowerConnect = commonFollowersOnLensAndFascaster(
-    data.data['hasCommonFollowersLensOrFarcaster'].Follower,
+    data.data['hasCommonFollowersLensOrFarcaster']?.Follower,
   );
 
   if (commonFollowerConnect) {
@@ -837,13 +818,13 @@ export const onTransaction: OnTransactionHandler = async ({
     );
 
     if (finalStatus == statuses[1]) {
-      finalStatus = statuses[2]
+      finalStatus = statuses[2];
     }
   }
 
   const doesReceiverHasStrongTransferHistory =
     checkIfReceiverHasStronglTransferHistory(data);
-  
+
   const ethereumFromTokenTransfer = data.data['ethereumFromTokenTransfer'];
   const polygonFromTokenTransfer = data.data['polygonFromTokenTransfer'];
 
@@ -858,31 +839,33 @@ export const onTransaction: OnTransactionHandler = async ({
 
   const doesBothUserStronglyFollowsEachOther =
     doesBothUserStronglyFollowEachOther(data);
-  
+
   if (doesBothUserStronglyFollowsEachOther) {
-    console.log("test test")
-    descriptions.push(
-      text(`${RIGHT_GREEN_SYMBOL} You both follow each other`)
-    )
+    console.log('test test');
+    descriptions.push(text(`${RIGHT_GREEN_SYMBOL} You both follow each other`));
   }
 
-  const isNonVirtualPoapAttended = checkIfNonVirtualPOAPAttended(data.data['hasPoaps']['Poap']);
+  const isNonVirtualPoapAttended = checkIfNonVirtualPOAPAttended(
+    data.data['hasPoaps']['Poap'],
+  );
 
   if (isNonVirtualPoapAttended) {
-        descriptions.push(
-          text(`${RIGHT_GREEN_SYMBOL} Receiver has non virtual POAP`),
-        );
+    descriptions.push(
+      text(`${RIGHT_GREEN_SYMBOL} Receiver has non virtual POAP`),
+    );
   }
-    console.log('data returned ', JSON.stringify(data));
+  console.log('data returned ', JSON.stringify(data));
 
   insightPanel.push(heading(`Status : ${finalStatus}`));
   insightPanel.push(divider());
-  
-  for (let i = 0; i < descriptions.length; i++) {
-   const description = descriptions[i]
-    insightPanel.push(description);
-  }
 
+
+for (let i = 0; i < descriptions.length; i++) {
+  const description = descriptions[i];
+  insightPanel.push(description);
+
+  }
+    
   return {
     content: panel(insightPanel),
     // severity: SeverityLevel.Critical,
@@ -894,7 +877,7 @@ export const onTransaction: OnTransactionHandler = async ({
   //     heading(`Status : ${finalStatus}`),
   //     divider(),
 
-      // text(`${RIGHT_GREEN_SYMBOL} You have previous transfer history`),
+  // text(`${RIGHT_GREEN_SYMBOL} You have previous transfer history`),
   //     // imageContent,
   //   ]),
   //   severity: SeverityLevel.Critical,
@@ -923,13 +906,13 @@ const checkIfToAddressHasTransferHistory = (
 const doesBothUserFollowEachOther = (
   socialFollowing: any
 ) => {
-  const following = socialFollowing['Following'];
+  const following = socialFollowing?.Following;
 
   if (!following) {
     return false;
   }
   
-  return following.length > 0;
+  return following?.length > 0;
 }
 
 const doesBothUserStronglyFollowEachOther = (
@@ -961,13 +944,16 @@ const commonFollowersOnLensAndFascaster = (
 ) => {
   let isCommonFollowerPresent = false;
 
+  if (!commonFollowersOnSocials) {
+    return isCommonFollowerPresent;
+  }
     for (let i = 0; i < commonFollowersOnSocials.length; i++) {
       const followerObj = commonFollowersOnSocials[i];
       // if(isCommonFollowerPresent)
       const followerList =
-        followerObj['followerAddress']['socialFollowers']['Follower'];
+        followerObj?.followerAddress?.socialFollowers?.Follower || [];
 
-      if (followerList != null && followerList.length > 0) {
+      if (followerList && followerList.length > 0) {
         console.log('followerObj ', followerObj);
         isCommonFollowerPresent = true;
         break;
@@ -1007,7 +993,7 @@ const checkIfReceiverHasStronglTransferHistory = (data:any) => {
 const commonPOAPEventsAttended = (data: any) => {
     const commonPOAPs = data.data['hasCommonPoaps']['Poap'];
 
-  if (commonPOAPs) {
+  if (!commonPOAPs) {
     return false;
   }
 
