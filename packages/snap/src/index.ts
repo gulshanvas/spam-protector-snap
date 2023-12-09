@@ -7,6 +7,32 @@ const AIRSTACK_KEY = 'c6425f6b2191483ca9e019a96b868561';
 
 airstack.init(AIRSTACK_KEY);
 
+let SYMBOLS = {
+  CORRECT: '✅',
+  INCORRECT: '❌',
+};
+
+  const statuses = {
+    0: 'Stay cautious !!!',
+    1: 'Connected',
+    2: 'Strongly Connected',
+  };
+
+const SUCCESS_MESSAGES_TO_USER = {
+  "TRANSFER_HISTORY_FOUND": `${SYMBOLS.CORRECT} Previous transfer history present `,
+  "COMMON_FOLLOWERS":`${SYMBOLS.CORRECT} Common follower on lens and fascaster`,
+  "RECEIVER_HISTORY":`${SYMBOLS.CORRECT} Receiver has transfer history `,
+  "FOLLOW_EACH_OTHER":`${SYMBOLS.CORRECT} You both follow each other`,
+  "RECEIVER_NON_VIRTUAL_POAP":`${SYMBOLS.CORRECT} Receiver has non virtual POAP`
+}
+
+const FAILURE_MESSAGES_TO_USER = {
+  NO_TRANSFER_HISTORY_FOUND: `${SYMBOLS.INCORRECT} No previous history found `,
+  NO_COMMON_FOLLOWERS: `${SYMBOLS.INCORRECT} No common followers on farcaster and lens`,
+  NO_RECEIVER_HISTORY: `${SYMBOLS.INCORRECT} No transfer history with receiver`,
+  NO_FOLLOW_EACH_OTHER: `${SYMBOLS.INCORRECT} You both don't follow each other on farcaster and lens`,
+  NO_RECEIVER_NON_VIRTUAL_POAP: `${SYMBOLS.INCORRECT} Receiver do not have non-virtual POAP`,
+};
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -89,15 +115,15 @@ export const onTransaction: OnTransactionHandler = async ({
   // const from = 'betashop.eth';
   const to = 'ipeciura.eth';
 
-  const variables = {
-    from: driveFrom,
-    to: driveTo,
-  };
-
   // const variables = {
-  //   from: transaction.from,
-  //   to: transaction.to,
+  //   from: driveFrom,
+  //   to: driveTo,
   // };
+
+  const variables = {
+    from: transaction.from,
+    to: transaction.to,
+  };
 
   const allEOADynamicQuery = `query AllEOAQuery($from: Identity!, $to: Identity!)  { # Top-level is User B's Identity (ipeciura.eth)
   hasSocialFollowing: Wallet(input: {identity: $to, blockchain: ethereum}) {
@@ -470,312 +496,12 @@ export const onTransaction: OnTransactionHandler = async ({
 }
   `;
 
-  //   const allEOAQuery = `query AllEOAQuery { # Top-level is User B's Identity (ipeciura.eth)
-  //   hasSocialFollowing: Wallet(input: {identity: "ipeciura.eth", blockchain: ethereum}) {
-  //     socialFollowings( # Here is User A's Identity (betashop.eth)
-  //       input: {filter: {identity: {_in: ["betashop.eth"]}}}
-  //     ) {
-  //       Following {
-  //         dappName
-  //         dappSlug
-  //         followingProfileId
-  //         followerProfileId
-  //         followerAddress {
-  //           addresses
-  //           socials {
-  //             dappName
-  //             profileName
-  //           }
-  //           domains {
-  //             name
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   hasEthereumTokenTransfers: TokenTransfers(
-  //     input: {
-  //       filter: { from: { _in: ["betashop.eth"] }, to: { _eq: "ipeciura.eth" } }
-  //       blockchain: ethereum
-  //     }
-  //   ) {
-  //     TokenTransfer {
-  //       from {
-  //         addresses
-  //         domains {
-  //           name
-  //         }
-  //         socials {
-  //           dappName
-  //           profileName
-  //           profileTokenId
-  //           profileTokenIdHex
-  //           userId
-  //           userAssociatedAddresses
-  //         }
-  //       }
-  //       to {
-  //         addresses
-  //         domains {
-  //           name
-  //         }
-  //         socials {
-  //           dappName
-  //           profileName
-  //           profileTokenId
-  //           profileTokenIdHex
-  //           userId
-  //           userAssociatedAddresses
-  //         }
-  //       }
-  //       transactionHash
-  //     }
-  //     pageInfo {
-  //       nextCursor
-  //       prevCursor
-  //     }
-  //   }
-  //   hasPolygonTokenTransfers: TokenTransfers(
-  //     input: {
-  //       filter: { from: { _in: ["betashop.eth"] }, to: { _eq: "ipeciura.eth" } }
-  //       blockchain: polygon
-  //     }
-  //   ) {
-  //     TokenTransfer {
-  //       from {
-  //         addresses
-  //         domains {
-  //           name
-  //         }
-  //         socials {
-  //           dappName
-  //           profileName
-  //           profileTokenId
-  //           profileTokenIdHex
-  //           userId
-  //           userAssociatedAddresses
-  //         }
-  //       }
-  //       to {
-  //         addresses
-  //         domains {
-  //           name
-  //         }
-  //         socials {
-  //           dappName
-  //           profileName
-  //           profileTokenId
-  //           profileTokenIdHex
-  //           userId
-  //           userAssociatedAddresses
-  //         }
-  //       }
-  //       transactionHash
-  //     }
-  //     pageInfo {
-  //       nextCursor
-  //       prevCursor
-  //     }
-  //   }
-
-  //   hasEthereumTokenbalance: TokenBalances(
-  //     input: {
-  //       filter: { owner: { _in: ["vitalik.eth"] } }
-  //       blockchain: ethereum
-  //       limit: 50
-  //     }
-  //   ) {
-  //     TokenBalance {
-  //       tokenAddress
-  //       tokenId
-  //       amount
-  //       tokenType
-  //       token {
-  //         name
-  //         symbol
-  //       }
-  //     }
-  //     pageInfo {
-  //       nextCursor
-  //       prevCursor
-  //     }
-  //   }
-  //   hasPolygonTokenbalance: TokenBalances(
-  //     input: {
-  //       filter: { owner: { _in: ["vitalik.eth"] } }
-  //       blockchain: polygon
-  //       limit: 50
-  //     }
-  //   ) {
-  //     TokenBalance {
-  //       tokenAddress
-  //       tokenId
-  //       amount
-  //       tokenType
-  //       token {
-  //         name
-  //         symbol
-  //       }
-  //     }
-  //     pageInfo {
-  //       nextCursor
-  //       prevCursor
-  //     }
-  //   }
-
-  //   hasPrimaryENS: Domains(
-  //     input: {
-  //       filter: {
-  //         owner: { _in: ["0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"] }
-  //         isPrimary: { _eq: true }
-  //       }
-  //       blockchain: ethereum
-  //     }
-  //   ) {
-  //     Domain {
-  //       name
-  //       owner
-  //       isPrimary
-  //     }
-  //   }
-
-  //   hasLens: Socials(
-  //     input: {
-  //       filter: {
-  //         dappName: { _eq: lens }
-  //         identity: { _in: ["0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"] }
-  //       }
-  //       blockchain: ethereum
-  //     }
-  //   ) {
-  //     Social {
-  //       profileName
-  //       profileTokenId
-  //       profileTokenIdHex
-  //     }
-  //   }
-
-  //   hasFarcaster: Socials(
-  //     input: {
-  //       filter: {
-  //         dappName: { _eq: farcaster }
-  //         identity: { _in: ["0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"] }
-  //       }
-  //       blockchain: ethereum
-  //     }
-  //   ) {
-  //     Social {
-  //       profileName
-  //       userId
-  //       userAssociatedAddresses
-  //     }
-  //   }
-
-  //   hasPoaps: Poaps(
-  //     input: {
-  //       filter: { owner: { _in: ["vitalik.eth"] } }
-  //       blockchain: ALL
-  //       limit: 50
-  //     }
-  //   ) {
-  //     Poap {
-  //       mintOrder
-  //       mintHash
-  //       poapEvent {
-  //         isVirtualEvent
-  //       }
-  //     }
-  //     pageInfo {
-  //       nextCursor
-  //       prevCursor
-  //     }
-  //   }
-
-  //   hasCommonPoaps:Poaps(
-  //     input: {
-  //       filter: { owner: { _eq: "betashop.eth" } }
-  //       blockchain: ALL
-  //       limit: 50
-  //     }
-  //   ) {
-  //     Poap {
-  //       poapEvent {
-  //         poaps(input: { filter: { owner: { _eq: "ipeciura.eth" } } }) {
-  //           eventId
-  //           mintHash
-  //           mintOrder
-  //           poapEvent {
-  //             eventName
-  //             eventURL
-  //             contentValue {
-  //               image {
-  //                 extraSmall
-  //                 small
-  //                 original
-  //                 medium
-  //                 large
-  //               }
-  //             }
-  //             isVirtualEvent
-  //             city
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   hasCommonFollowersLensOrFarcaster: SocialFollowers(
-  //     input: {
-  //       filter: { identity: { _eq: "betashop.eth" } }
-  //       blockchain: ALL
-  //       limit: 50
-  //     }
-  //   ) {
-  //     Follower {
-  //       followerAddress {
-  //         socialFollowers(
-  //           input: { filter: { identity: { _eq: "ipeciura.eth" } } }
-  //         ) {
-  //           Follower {
-  //             followerAddress {
-  //               addresses
-  //               domains {
-  //                 name
-  //               }
-  //               socials {
-  //                 profileName
-  //                 profileTokenId
-  //                 profileTokenIdHex
-  //                 userId
-  //                 userAssociatedAddresses
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  //   `;
-
-  // const isContract = await window.ethereum.request({ method: 'eth_getCode' });
-
   const url = 'https://api.airstack.xyz/gql';
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-key': AIRSTACK_KEY,
-    },
-    body: JSON.stringify({ query: allEOADynamicQuery }),
-  };
 
   const data = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // "x-key": AIRSTACK_KEY,
     },
     body: JSON.stringify({ query: allEOADynamicQuery, variables }),
   }).then((response) => {
@@ -789,23 +515,13 @@ export const onTransaction: OnTransactionHandler = async ({
     polygonTokenTransfer,
   );
 
-  let RIGHT_GREEN_SYMBOL = '✅';
-
-  let statuses = {
-    0: 'Stay cautious !!!',
-    1: 'Connected',
-    2: 'Strongly Connected',
-  };
-
   let finalStatus = statuses[0];
 
   let descriptions = [];
   let insightPanel = [];
   if (tokenTranferConnect) {
     finalStatus = statuses[1];
-    descriptions.push(
-      text(`${RIGHT_GREEN_SYMBOL} Previous transfer history present `),
-    );
+    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.TRANSFER_HISTORY_FOUND));
   }
 
   const commonFollowerConnect = commonFollowersOnLensAndFascaster(
@@ -813,9 +529,7 @@ export const onTransaction: OnTransactionHandler = async ({
   );
 
   if (commonFollowerConnect) {
-    descriptions.push(
-      text(`${RIGHT_GREEN_SYMBOL} Common follower on lens and fascaster `),
-    );
+    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.COMMON_FOLLOWERS));
 
     if (finalStatus == statuses[1]) {
       finalStatus = statuses[2];
@@ -832,17 +546,14 @@ export const onTransaction: OnTransactionHandler = async ({
   console.log('polygonFromTokenTransfer ', polygonFromTokenTransfer);
 
   if (doesReceiverHasStrongTransferHistory) {
-    descriptions.push(
-      text(`${RIGHT_GREEN_SYMBOL} Receivers has strong transfer history `),
-    );
+    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_HISTORY));
   }
 
   const doesBothUserStronglyFollowsEachOther =
     doesBothUserStronglyFollowEachOther(data);
 
   if (doesBothUserStronglyFollowsEachOther) {
-    console.log('test test');
-    descriptions.push(text(`${RIGHT_GREEN_SYMBOL} You both follow each other`));
+    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.FOLLOW_EACH_OTHER));
   }
 
   const isNonVirtualPoapAttended = checkIfNonVirtualPOAPAttended(
@@ -850,38 +561,31 @@ export const onTransaction: OnTransactionHandler = async ({
   );
 
   if (isNonVirtualPoapAttended) {
-    descriptions.push(
-      text(`${RIGHT_GREEN_SYMBOL} Receiver has non virtual POAP`),
-    );
+    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_NON_VIRTUAL_POAP));
   }
   console.log('data returned ', JSON.stringify(data));
 
   insightPanel.push(heading(`Status : ${finalStatus}`));
   insightPanel.push(divider());
 
-
-for (let i = 0; i < descriptions.length; i++) {
-  const description = descriptions[i];
-  insightPanel.push(description);
-
+  for (let i = 0; i < descriptions.length; i++) {
+    const description = descriptions[i];
+    insightPanel.push(description);
   }
-    
+
+  // no connection found
+  if (descriptions.length == 0) {
+    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_TRANSFER_HISTORY_FOUND))
+    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_COMMON_FOLLOWERS))
+    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_RECEIVER_HISTORY))
+    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_FOLLOW_EACH_OTHER))
+    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_RECEIVER_NON_VIRTUAL_POAP))
+  }
+
   return {
     content: panel(insightPanel),
     // severity: SeverityLevel.Critical,
   };
-
-  // working
-  // return {
-  //   content: panel([
-  //     heading(`Status : ${finalStatus}`),
-  //     divider(),
-
-  // text(`${RIGHT_GREEN_SYMBOL} You have previous transfer history`),
-  //     // imageContent,
-  //   ]),
-  //   severity: SeverityLevel.Critical,
-  // };
 };
 
 const checkIfAlreadyTransferHistroyBetweenFromTo = (
@@ -1081,21 +785,3 @@ const checkIfNonVirtualPOAPAttended = (
 
   return isNonVirtualPoapAttended;
 }
-
-// import { OnTransactionHandler } from '@metamask/snaps-types';
-// import { panel, heading, text } from '@metamask/snaps-ui';
-
-// export const onTransaction: OnTransactionHandler = async ({
-//   transaction,
-//   chainId,
-//   transactionOrigin,
-// }) => {
-//   const insights = /* Get insights */;
-//   return {
-//     content: panel([
-//       heading('My Transaction Insights'),
-//       text('Here are the insights:'),
-//       ...(insights.map((insight) => text(insight.value)))
-//     ])
-//   };
-// };
