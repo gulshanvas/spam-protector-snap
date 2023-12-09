@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
   "description": "An example Snap written in TypeScript.",
-  "proposedName": "Spam Protection",
+  "proposedName": "Airstack Spam Protection",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "FYibKJshG/K5cvsTX9/CVFsHy3OBQ+q7rJr9RIgAMQ0=",
+    "shasum": "qJZbMlI8ikijcVt1SNH+IwgKUK4ZJpox7BRfS4SOqAw=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
