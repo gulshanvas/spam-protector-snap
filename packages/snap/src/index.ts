@@ -1,38 +1,20 @@
 import type { OnRpcRequestHandler, OnTransactionHandler } from '@metamask/snaps-sdk';
 import { SeverityLevel, divider, heading, image, panel, row, text } from '@metamask/snaps-sdk';
 
+import { allEOADynamicQuery } from './queries';
+
+import {
+  STATUS,
+  SUCCESS_MESSAGES_TO_USER,
+  FAILURE_MESSAGES_TO_USER,
+} from './constants';
+
 const airstack = require('@airstack/node');
 
 const AIRSTACK_KEY = 'c6425f6b2191483ca9e019a96b868561';
 
 airstack.init(AIRSTACK_KEY);
 
-let SYMBOLS = {
-  CORRECT: '✅',
-  INCORRECT: '❌',
-};
-
-  const statuses = {
-    0: 'Stay cautious !!!',
-    1: 'Connected',
-    2: 'Strongly Connected',
-  };
-
-const SUCCESS_MESSAGES_TO_USER = {
-  "TRANSFER_HISTORY_FOUND": `${SYMBOLS.CORRECT} Previous transfer history present `,
-  "COMMON_FOLLOWERS":`${SYMBOLS.CORRECT} Common follower on lens and fascaster`,
-  "RECEIVER_HISTORY":`${SYMBOLS.CORRECT} Receiver has transfer history `,
-  "FOLLOW_EACH_OTHER":`${SYMBOLS.CORRECT} You both follow each other`,
-  "RECEIVER_NON_VIRTUAL_POAP":`${SYMBOLS.CORRECT} Receiver has non virtual POAP`
-}
-
-const FAILURE_MESSAGES_TO_USER = {
-  NO_TRANSFER_HISTORY_FOUND: `${SYMBOLS.INCORRECT} No previous history found `,
-  NO_COMMON_FOLLOWERS: `${SYMBOLS.INCORRECT} No common followers on farcaster and lens`,
-  NO_RECEIVER_HISTORY: `${SYMBOLS.INCORRECT} No transfer history with receiver`,
-  NO_FOLLOW_EACH_OTHER: `${SYMBOLS.INCORRECT} You both don't follow each other on farcaster and lens`,
-  NO_RECEIVER_NON_VIRTUAL_POAP: `${SYMBOLS.INCORRECT} Receiver do not have non-virtual POAP`,
-};
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -88,377 +70,6 @@ export const onTransaction: OnTransactionHandler = async ({
     to: transaction.to,
   };
 
-  const allEOADynamicQuery = `query AllEOAQuery($from: Identity!, $to: Identity!)  { # Top-level is User B's Identity (ipeciura.eth)
-  hasSocialFollowing: Wallet(input: {identity: $to, blockchain: ethereum}) {
-    socialFollowings( # Here is User A's Identity (betashop.eth)
-      input: {filter: {identity: {_in: [$from]}}}
-    ) {
-      Following {
-        dappName
-        dappSlug
-        followingProfileId
-        followerProfileId
-        followerAddress {
-          addresses
-          socials {
-            dappName
-            profileName
-          }
-          domains {
-            name
-          }
-        }
-      }
-    }
-  }
-  
-  hasEthereumTokenTransfers: TokenTransfers(
-    input: {
-      filter: { from: { _in: [$from] }, to: { _eq: $to } }
-      blockchain: ethereum
-    }
-  ) {
-    TokenTransfer {
-      from {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      to {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      transactionHash
-    }
-    pageInfo {
-      nextCursor
-      prevCursor
-    }
-  }
-  hasPolygonTokenTransfers: TokenTransfers(
-    input: {
-      filter: { from: { _in: [$from] }, to: { _eq: $to } }
-      blockchain: polygon
-    }
-  ) {
-    TokenTransfer {
-      from {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      to {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      transactionHash
-    }
-    pageInfo {
-      nextCursor
-      prevCursor
-    }
-  }
-  
-  
-  hasEthereumTokenbalance: TokenBalances(
-    input: {
-      filter: { owner: { _in: ["vitalik.eth"] } }
-      blockchain: ethereum
-      limit: 50
-    }
-  ) {
-    TokenBalance {
-      tokenAddress
-      tokenId
-      amount
-      tokenType
-      token {
-        name
-        symbol
-      }
-    }
-    pageInfo {
-      nextCursor
-      prevCursor
-    }
-  }
-  hasPolygonTokenbalance: TokenBalances(
-    input: {
-      filter: { owner: { _in: ["vitalik.eth"] } }
-      blockchain: polygon
-      limit: 50
-    }
-  ) {
-    TokenBalance {
-      tokenAddress
-      tokenId
-      amount
-      tokenType
-      token {
-        name
-        symbol
-      }
-    }
-    pageInfo {
-      nextCursor
-      prevCursor
-    }
-  }
-  
-  hasPrimaryENS: Domains(
-    input: {
-      filter: {
-        owner: { _in: [$to] }
-        isPrimary: { _eq: true }
-      }
-      blockchain: ethereum
-    }
-  ) {
-    Domain {
-      name
-      owner
-      isPrimary
-    }
-  }
-  
-  
-  hasLens: Socials(
-    input: {
-      filter: {
-        dappName: { _eq: lens }
-        identity: { _in: [$to] }
-      }
-      blockchain: ethereum
-    }
-  ) {
-    Social {
-      profileName
-      profileTokenId
-      profileTokenIdHex
-    }
-  }
-  
-  hasFarcaster: Socials(
-    input: {
-      filter: {
-        dappName: { _eq: farcaster }
-        identity: { _in: [$to] }
-      }
-      blockchain: ethereum
-    }
-  ) {
-    Social {
-      profileName
-      userId
-      userAssociatedAddresses
-    }
-  }
-  
-  
-  hasPoaps: Poaps(
-    input: {
-      filter: { owner: { _in: [$to] } }
-      blockchain: ALL
-      limit: 50
-    }
-  ) {
-    Poap {
-      mintOrder
-      mintHash
-      poapEvent {
-        isVirtualEvent
-      }
-    }
-    pageInfo {
-      nextCursor
-      prevCursor
-    }
-  }
-
-  hasCommonPoaps:Poaps(
-    input: {
-      filter: { owner: { _eq: $from } }
-      blockchain: ALL
-      limit: 50
-    }
-  ) {
-    Poap {
-      poapEvent {
-        poaps(input: { filter: { owner: { _eq: $to } } }) {
-          eventId
-          mintHash
-          mintOrder
-          poapEvent {
-            eventName
-            eventURL
-            contentValue {
-              image {
-                extraSmall
-                small
-                original
-                medium
-                large
-              }
-            }
-            isVirtualEvent
-            city
-          }
-        }
-      }
-    }
-  }
-
-      ethereumFromTokenTransfer: TokenTransfers(
-    input: { filter: { from: { _in: [$to] } }, blockchain: ethereum }
-  ) {
-    TokenTransfer {
-      from {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      to {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      transactionHash
-    }
-    pageInfo {
-      nextCursor
-      prevCursor
-    }
-  }
-  polygonFromTokenTransfer: TokenTransfers(
-    input: { filter: { from: { _in: [$to] } }, blockchain: polygon }
-  ) {
-    TokenTransfer {
-      from {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      to {
-        addresses
-        domains {
-          name
-        }
-        socials {
-          dappName
-          profileName
-          profileTokenId
-          profileTokenIdHex
-          userId
-          userAssociatedAddresses
-        }
-      }
-      transactionHash
-    }
-    pageInfo {
-      nextCursor
-      prevCursor
-    }
-  }
-  
-  hasCommonFollowersLensOrFarcaster: SocialFollowers(
-    input: {
-      filter: { identity: { _eq: $from } }
-      blockchain: ALL
-      limit: 50
-    }
-  ) {
-    Follower {
-      followerAddress {
-        socialFollowers(
-          input: { filter: { identity: { _eq: $to } } }
-        ) {
-          Follower {
-            followerAddress {
-              addresses
-              domains {
-                name
-              }
-              socials {
-                profileName
-                profileTokenId
-                profileTokenIdHex
-                userId
-                userAssociatedAddresses
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-  `;
-
   const url = 'https://api.airstack.xyz/gql';
 
   const data = await fetch(url, {
@@ -478,12 +89,12 @@ export const onTransaction: OnTransactionHandler = async ({
     polygonTokenTransfer,
   );
 
-  let finalStatus = statuses[0];
+  let finalStatus = STATUS[0];
 
   let descriptions = [];
   let insightPanel = [];
   if (tokenTranferConnect) {
-    finalStatus = statuses[1];
+    finalStatus = STATUS[1];
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.TRANSFER_HISTORY_FOUND));
   }
 
@@ -494,8 +105,8 @@ export const onTransaction: OnTransactionHandler = async ({
   if (commonFollowerConnect) {
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.COMMON_FOLLOWERS));
 
-    if (finalStatus == statuses[1]) {
-      finalStatus = statuses[2];
+    if (finalStatus == STATUS[1]) {
+      finalStatus = STATUS[2];
     }
   }
 
