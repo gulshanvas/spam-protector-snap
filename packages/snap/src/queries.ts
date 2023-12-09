@@ -1,4 +1,4 @@
-export const allEOADynamicQuery = `query AllEOAQuery($from: Identity!, $to: Identity!)  { # Top-level is User B's Identity (ipeciura.eth)
+export const ALL_EOA_QUERY = `query AllEOAQuery($from: Identity!, $to: Identity!)  { # Top-level is User B's Identity (ipeciura.eth)
   hasSocialFollowing: Wallet(input: {identity: $to, blockchain: ethereum}) {
     socialFollowings( # Here is User A's Identity (betashop.eth)
       input: {filter: {identity: {_in: [$from]}}}

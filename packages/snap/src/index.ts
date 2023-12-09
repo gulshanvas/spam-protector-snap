@@ -1,7 +1,7 @@
 import type { OnRpcRequestHandler, OnTransactionHandler } from '@metamask/snaps-sdk';
 import { SeverityLevel, divider, heading, image, panel, row, text } from '@metamask/snaps-sdk';
 
-import { allEOADynamicQuery } from './queries';
+import { ALL_EOA_QUERY } from './queries';
 
 import {
   STATUS,
@@ -61,23 +61,22 @@ export const onTransaction: OnTransactionHandler = async ({
   const driveTo = 'ipeciura.eth';
   const to = 'ipeciura.eth';
 
-  // const variables = {
-  //   from: driveFrom,
-  //   to: driveTo,
-  // };
-
   const variables = {
-    from: transaction.from,
-    to: transaction.to,
+    from: driveFrom,
+    to: driveTo,
   };
 
+  // const variables = {
+  //   from: transaction.from,
+  //   to: transaction.to,
+  // };
 
   const data = await fetch(AIRSTACK_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ query: allEOADynamicQuery, variables }),
+    body: JSON.stringify({ query: ALL_EOA_QUERY, variables }),
   }).then((response) => {
     return response.json();
   });
@@ -91,10 +90,13 @@ export const onTransaction: OnTransactionHandler = async ({
 
   let finalStatus = STATUS[0];
 
+  let connectionScore = 0
+
   let descriptions = [];
   let insightPanel = [];
   if (tokenTranferConnect) {
-    finalStatus = STATUS[1];
+    // finalStatus = STATUS[1];
+    connectionScore++;
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.TRANSFER_HISTORY_FOUND));
   }
 
@@ -105,9 +107,10 @@ export const onTransaction: OnTransactionHandler = async ({
   if (commonFollowerConnect) {
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.COMMON_FOLLOWERS));
 
-    if (finalStatus == STATUS[1]) {
-      finalStatus = STATUS[2];
-    }
+    connectionScore++;
+    // if (finalStatus == STATUS[1]) {
+    //   finalStatus = STATUS[2];
+    // }
   }
 
   const doesReceiverHasStrongTransferHistory =
@@ -115,6 +118,7 @@ export const onTransaction: OnTransactionHandler = async ({
 
   if (doesReceiverHasStrongTransferHistory) {
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_HISTORY));
+    connectionScore++;
   }
 
   const doesBothUserStronglyFollowsEachOther =
@@ -122,6 +126,7 @@ export const onTransaction: OnTransactionHandler = async ({
 
   if (doesBothUserStronglyFollowsEachOther) {
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.FOLLOW_EACH_OTHER));
+    connectionScore++;
   }
 
   const isNonVirtualPoapAttended = checkIfNonVirtualPOAPAttended(
@@ -130,7 +135,14 @@ export const onTransaction: OnTransactionHandler = async ({
 
   if (isNonVirtualPoapAttended) {
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_NON_VIRTUAL_POAP));
+    connectionScore++;
   }
+
+  if (connectionScore == 1) {
+    finalStatus = STATUS[1] // CONNECTED
+  } else if (connectionScore > 1) {
+    finalStatus = STATUS[2]; // STRONGLY CONNECTED
+  } 
 
   insightPanel.push(heading(`Status : ${finalStatus}`));
   insightPanel.push(divider());
@@ -155,6 +167,12 @@ export const onTransaction: OnTransactionHandler = async ({
   };
 };
 
+const processEOA = (
+  variables
+) => {
+  
+}
+
 /**
  * It validates whether `sender` has transfer history on ethereum and polygon
  * @param ethereumTokenTransfer Object of User A has transferred to user B on ethereum
@@ -166,7 +184,6 @@ const checkIfAlreadyTransferHistroyBetweenFromTo = (
   polygonTokenTransfer: any,
 ) => {
   return ethereumTokenTransfer?.TokenTransfer?.length || polygonTokenTransfer?.TokenTransfer?.length;
-
 }
 
 /**
