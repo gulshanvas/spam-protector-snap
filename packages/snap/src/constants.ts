@@ -19,9 +19,9 @@ export const SUCCESS_MESSAGES_TO_USER = {
 };
 
 export const FAILURE_MESSAGES_TO_USER = {
-  NO_TRANSFER_HISTORY_FOUND: `${SYMBOLS.INCORRECT} No previous history found !!!`,
-  NO_COMMON_FOLLOWERS: `${SYMBOLS.INCORRECT} No common followers on farcaster and lens !!`,
-  NO_RECEIVER_HISTORY: `${SYMBOLS.INCORRECT} No transfer history with receiver !!`,
+  NO_TRANSFER_HISTORY_FOUND: `${SYMBOLS.INCORRECT} No previous history found`,
+  NO_COMMON_FOLLOWERS: `${SYMBOLS.INCORRECT} No common followers on farcaster and lens`,
+  NO_RECEIVER_HISTORY: `${SYMBOLS.INCORRECT} No transfer history with receiver`,
   NO_FOLLOW_EACH_OTHER: `${SYMBOLS.INCORRECT} You both don't follow each other on farcaster and lens`,
   NO_RECEIVER_NON_VIRTUAL_POAP: `${SYMBOLS.INCORRECT} Receiver do not have non-virtual POAP`,
 };

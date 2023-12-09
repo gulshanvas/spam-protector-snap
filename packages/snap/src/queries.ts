@@ -21,7 +21,25 @@ export const ALL_EOA_QUERY = `query AllEOAQuery($from: Identity!, $to: Identity!
       }
     }
   }
+
+  fromSocialInfo: Wallet(
+    input: {identity: $from, blockchain: ethereum}
+  ) {
+    socials {
+      dappName
+      profileName
+    }
+  }
   
+  toSocialInfo: Wallet(
+    input: {identity: $to, blockchain: ethereum}
+  ) {
+    socials {
+      dappName
+      profileName
+    }
+  }
+
   hasEthereumTokenTransfers: TokenTransfers(
     input: {
       filter: { from: { _in: [$from] }, to: { _eq: $to } }

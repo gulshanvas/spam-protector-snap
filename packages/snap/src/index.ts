@@ -1,6 +1,8 @@
 import type { OnRpcRequestHandler, OnTransactionHandler } from '@metamask/snaps-sdk';
 import { SeverityLevel, divider, heading, image, panel, row, text } from '@metamask/snaps-sdk';
 
+import {hasProperty} from '@metamask/utils'
+
 import { ALL_EOA_QUERY } from './queries';
 
 import {
@@ -59,83 +61,31 @@ export const onTransaction: OnTransactionHandler = async ({
 
   const driveFrom = 'betashop.eth';
   const driveTo = 'ipeciura.eth';
-  const to = 'ipeciura.eth';
-
-  const variables = {
-    from: driveFrom,
-    to: driveTo,
-  };
 
   // const variables = {
-  //   from: transaction.from,
-  //   to: transaction.to,
+  //   from: driveFrom,
+  //   to: driveTo,
   // };
 
-  const data = await fetch(AIRSTACK_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query: ALL_EOA_QUERY, variables }),
-  }).then((response) => {
-    return response.json();
-  });
-
-  const ethereumTokenTransfer = data.data['hasEthereumTokenTransfers'];
-  const polygonTokenTransfer = data.data['hasPolygonTokenTransfers'];
-  const tokenTranferConnect = checkIfAlreadyTransferHistroyBetweenFromTo(
-    ethereumTokenTransfer,
-    polygonTokenTransfer,
-  );
+  const variables = {
+    from: transaction.from,
+    to: transaction.to,
+  };
 
   let finalStatus = STATUS[0];
-
-  let connectionScore = 0
-
-  let descriptions = [];
   let insightPanel = [];
-  if (tokenTranferConnect) {
-    // finalStatus = STATUS[1];
-    connectionScore++;
-    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.TRANSFER_HISTORY_FOUND));
-  }
 
-  const commonFollowerConnect = commonFollowersOnLensAndFascaster(
-    data.data['hasCommonFollowersLensOrFarcaster']?.Follower,
-  );
+  let connectionScore = 0;
+  let descriptions = [];
 
-  if (commonFollowerConnect) {
-    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.COMMON_FOLLOWERS));
-
-    connectionScore++;
-    // if (finalStatus == STATUS[1]) {
-    //   finalStatus = STATUS[2];
-    // }
-  }
-
-  const doesReceiverHasStrongTransferHistory =
-    checkIfReceiverHasStronglTransferHistory(data);
-
-  if (doesReceiverHasStrongTransferHistory) {
-    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_HISTORY));
-    connectionScore++;
-  }
-
-  const doesBothUserStronglyFollowsEachOther =
-    doesBothUserStronglyFollowEachOther(data);
-
-  if (doesBothUserStronglyFollowsEachOther) {
-    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.FOLLOW_EACH_OTHER));
-    connectionScore++;
-  }
-
-  const isNonVirtualPoapAttended = checkIfNonVirtualPOAPAttended(
-    data.data['hasPoaps']['Poap'],
-  );
-
-  if (isNonVirtualPoapAttended) {
-    descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_NON_VIRTUAL_POAP));
-    connectionScore++;
+  if (
+    hasProperty(transaction, 'data') &&
+    typeof transaction.data === 'string'
+  ) {
+    // smart contract
+  } else {
+    // EOA interaction
+    ({ connectionScore, descriptions } = await processEOA(variables))
   }
 
   if (connectionScore == 1) {
@@ -167,10 +117,75 @@ export const onTransaction: OnTransactionHandler = async ({
   };
 };
 
-const processEOA = (
-  variables
+const processEOA = async(
+  variables: any,
 ) => {
+    const data = await fetch(AIRSTACK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: ALL_EOA_QUERY, variables }),
+    }).then((response) => {
+      return response.json();
+    });
+
+    const ethereumTokenTransfer = data.data['hasEthereumTokenTransfers'];
+    const polygonTokenTransfer = data.data['hasPolygonTokenTransfers'];
+    const tokenTranferConnect = checkIfAlreadyTransferHistroyBetweenFromTo(
+      ethereumTokenTransfer,
+      polygonTokenTransfer,
+    );
+
+    let connectionScore = 0;
+
+    let descriptions = [];
+    if (tokenTranferConnect) {
+      connectionScore++;
+      descriptions.push(text(SUCCESS_MESSAGES_TO_USER.TRANSFER_HISTORY_FOUND));
+    }
+
+    const commonFollowerConnect = commonFollowersOnLensAndFascaster(
+      data.data['hasCommonFollowersLensOrFarcaster']?.Follower,
+    );
+
+    if (commonFollowerConnect) {
+      descriptions.push(text(SUCCESS_MESSAGES_TO_USER.COMMON_FOLLOWERS));
+
+      connectionScore++;
+    }
+
+    const doesReceiverHasStrongTransferHistory =
+      checkIfReceiverHasStronglTransferHistory(data);
+
+    if (doesReceiverHasStrongTransferHistory) {
+      descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_HISTORY));
+      connectionScore++;
+    }
+
+    const doesBothUserStronglyFollowsEachOther =
+      doesBothUserStronglyFollowEachOther(data);
+
+    if (doesBothUserStronglyFollowsEachOther) {
+      descriptions.push(text(SUCCESS_MESSAGES_TO_USER.FOLLOW_EACH_OTHER));
+      connectionScore++;
+    }
+
+    const isNonVirtualPoapAttended = checkIfNonVirtualPOAPAttended(
+      data.data['hasPoaps']['Poap'],
+    );
+
+    if (isNonVirtualPoapAttended) {
+      descriptions.push(
+        text(SUCCESS_MESSAGES_TO_USER.RECEIVER_NON_VIRTUAL_POAP),
+      );
+      connectionScore++;
+    }
   
+  return {
+    connectionScore,
+    descriptions
+  }
 }
 
 /**
@@ -248,15 +263,42 @@ const doesBothUserStronglyFollowEachOther = (
     data.data['hasSocialFollowing']['socialFollowings'],
   );
 
-  return (
-    isFromUserFollowsTo &&
-    (isCommonPOAPEventsAttended ||
-      doesUserHasLensProfile ||
-      doesUserHasFarcasterProfile ||
-      doesUserHasPrimaryENS)
-  );
+  // Notice: It is done because there is a bug in Social following api
+  // when new address is used which doesnt have any socials
+  const fromSocial = doesFromAddressHasSocial(data.data['fromSocialInfo']);
+  const toSocial = doesToAddressHasSocial(data.data['toSocialInfo']);
+
+  if (fromSocial && toSocial) {
+    return (
+      isFromUserFollowsTo &&
+      (isCommonPOAPEventsAttended ||
+        doesUserHasLensProfile ||
+        doesUserHasFarcasterProfile ||
+        doesUserHasPrimaryENS)
+    );
+  } 
+
+  return false
+}
+
+const doesFromAddressHasSocial = (fromSocialInfo: any) => {
+
+  if (!fromSocialInfo) {
+    return false;
+  }
+
+  return fromSocialInfo?.socials?.length > 0;
 
 }
+
+const doesToAddressHasSocial = (toSocialInfo: any) => {
+    if (!toSocialInfo) {
+      return false;
+    }
+
+    return toSocialInfo?.socials?.length > 0;
+
+};
 
 /**
  * It validates if two users has common farcaster and lens followers
@@ -312,7 +354,6 @@ const checkIfReceiverHasStronglTransferHistory = (data:any) => {
     data.data['hasFarcaster'],
   );
   const doesUserHasPrimaryENS = hasPrimaryENS(data.data['hasPrimaryENS']);
-
 
   const doesToUserHasTransferHistory = checkIfToAddressHasTransferHistory(
     data.data['ethereumFromTokenTransfer'],
