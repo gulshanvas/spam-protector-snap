@@ -72,47 +72,10 @@ export const onTransaction: OnTransactionHandler = async ({
   transaction,
   chainId,
   transactionOrigin,
-  // request,
 }) => {
-  // TODO: perform calculation here
-
-  console.log('perform query here');
-  //     const query = `query isFollowing { # Top-level is User B's Identity (ipeciura.eth)
-  //   Wallet(input: {identity: "ipeciura.eth", blockchain: ethereum}) {
-  //     socialFollowings( # Here is User A's Identity (betashop.eth)
-  //       input: {filter: {identity: {_in: ["betashop.eth"]}}}
-  //     ) {
-  //       Following {
-  //         dappName
-  //         dappSlug
-  //         followingProfileId
-  //         followerProfileId
-  //         followerAddress {
-  //           addresses
-  //           socials {
-  //             dappName
-  //             profileName
-  //           }
-  //           domains {
-  //             name
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }`;
-
-  //     const { data, error } = await airstack.fetchQuery(query);
-
-  //     console.log('data:', data);
-
-  //     console.log('error:', error);
-
-  const from = '';
 
   const driveFrom = 'betashop.eth';
   const driveTo = 'ipeciura.eth';
-  // const from = 'betashop.eth';
   const to = 'ipeciura.eth';
 
   // const variables = {
@@ -539,12 +502,6 @@ export const onTransaction: OnTransactionHandler = async ({
   const doesReceiverHasStrongTransferHistory =
     checkIfReceiverHasStronglTransferHistory(data);
 
-  const ethereumFromTokenTransfer = data.data['ethereumFromTokenTransfer'];
-  const polygonFromTokenTransfer = data.data['polygonFromTokenTransfer'];
-
-  console.log('ethereumFromTokenTransfer ', ethereumFromTokenTransfer);
-  console.log('polygonFromTokenTransfer ', polygonFromTokenTransfer);
-
   if (doesReceiverHasStrongTransferHistory) {
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_HISTORY));
   }
@@ -563,7 +520,6 @@ export const onTransaction: OnTransactionHandler = async ({
   if (isNonVirtualPoapAttended) {
     descriptions.push(text(SUCCESS_MESSAGES_TO_USER.RECEIVER_NON_VIRTUAL_POAP));
   }
-  console.log('data returned ', JSON.stringify(data));
 
   insightPanel.push(heading(`Status : ${finalStatus}`));
   insightPanel.push(divider());
@@ -588,6 +544,12 @@ export const onTransaction: OnTransactionHandler = async ({
   };
 };
 
+/**
+ * It validates whether `sender` has transfer history on ethereum and polygon
+ * @param ethereumTokenTransfer Object of User A has transferred to user B on ethereum
+ * @param polygonTokenTransfer Object of User A has transferred to user B on polygon
+ * @returns 
+ */
 const checkIfAlreadyTransferHistroyBetweenFromTo = (
   ethereumTokenTransfer: any,
   polygonTokenTransfer: any,
@@ -596,6 +558,13 @@ const checkIfAlreadyTransferHistroyBetweenFromTo = (
 
 }
 
+/**
+ * It validates if user has transfer history on ethereum and polygon
+ * 
+ * @param ethereumFromTransferHistory Address transfer history on ethereum
+ * @param polygonFromTransferHistory Address transfer history on polygon
+ * @returns 
+ */
 const checkIfToAddressHasTransferHistory = (
   ethereumFromTransferHistory: any,
   polygonFromTransferHistory: any,
@@ -607,6 +576,11 @@ const checkIfToAddressHasTransferHistory = (
 
 }
 
+/**
+ * It validates if user's follow each other
+ * @param socialFollowing 
+ * @returns 
+ */
 const doesBothUserFollowEachOther = (
   socialFollowing: any
 ) => {
@@ -619,6 +593,19 @@ const doesBothUserFollowEachOther = (
   return following?.length > 0;
 }
 
+/**
+ * It validates if :
+ *    1. Two users have common POAP
+ *    2. Has lens profile
+ *    3. Has farcaster account
+ *    4. Has Primary ENS
+ *    5. Does `sender` follows `receiver` on fascaster and lens platforms (Mandatory)
+ * 
+ *  From the above 5th point is mandatory and must satisfy atleast 1 point from
+ *  1 to 4 points
+ * @param data 
+ * @returns 
+ */
 const doesBothUserStronglyFollowEachOther = (
   data : any
 ) => {
@@ -643,6 +630,12 @@ const doesBothUserStronglyFollowEachOther = (
 
 }
 
+/**
+ * It validates if two users has common farcaster and lens followers
+ * 
+ * @param commonFollowersOnSocials Social object
+ * @returns 
+ */
 const commonFollowersOnLensAndFascaster = (
   commonFollowersOnSocials: any // lens or farcaster
 ) => {
@@ -669,8 +662,22 @@ const commonFollowersOnLensAndFascaster = (
 
 }
 
+/**
+ * It validates if :
+ *    1. Two users have common POAP
+ *    2. Has lens profile
+ *    3. Has farcaster account
+ *    4. Has Primary ENS
+ *    5. Does `receiver` has transfer history with `sender` on fascaster and lens platforms (Mandatory)
+ * 
+ *  From the above 5th point is mandatory and must satisfy atleast 1 point from
+ *  1 to 4 points 
+ * 
+ * @param data Entire Data object
+ * @returns 
+ */
 const checkIfReceiverHasStronglTransferHistory = (data:any) => {
-  // 
+
   const isCommonPOAPEventsAttended = commonPOAPEventsAttended(data);
   const doesUserHasLensProfile = hasLensProfile(data.data['hasLens']);
   const doesUserHasFarcasterProfile = hasFarCasterAccount(
@@ -694,6 +701,11 @@ const checkIfReceiverHasStronglTransferHistory = (data:any) => {
 
 }
 
+/**
+ * It validates whether there are any common POAPs between two users 
+ * @param data data object received 
+ * @returns 
+ */
 const commonPOAPEventsAttended = (data: any) => {
     const commonPOAPs = data.data['hasCommonPoaps']['Poap'];
 
@@ -715,9 +727,13 @@ const commonPOAPEventsAttended = (data: any) => {
 
 }
 
+/**
+ * It validates whether user has lens profile
+ * 
+ * @param lensData Lens data of the suer
+ * @returns 
+ */
 const hasLensProfile = (lensData: any) => {
-    // const socialProfile = data.data['hasLens'];
-
     const lensProfile = lensData['Social'];
 
     if (!lensProfile) {
@@ -731,6 +747,12 @@ const hasLensProfile = (lensData: any) => {
   return false;
  };
 
+ /**
+ * It validates whether user has farcaster account
+ * 
+ * @param farcasterData Farcaster details of the user
+ * @returns 
+ */
 const hasFarCasterAccount = (farcasterData: any) => {
   const farcasterProfile = farcasterData['Social'];
 
@@ -745,6 +767,12 @@ const hasFarCasterAccount = (farcasterData: any) => {
   return false;
 };
 
+/**
+ * It validates whether user has primary ENS
+ * 
+ * @param ensData ENS Data of user
+ * @returns 
+ */
 const hasPrimaryENS = (
   ensData: any
 ) => {
@@ -761,6 +789,12 @@ const hasPrimaryENS = (
   return false;
 }
 
+/**
+ * It checks if user has attended non-virtual POAP
+ * 
+ * @param poap Poap object 
+ * @returns bool
+ */
 const checkIfNonVirtualPOAPAttended = (
   poap: any
 ) => {
