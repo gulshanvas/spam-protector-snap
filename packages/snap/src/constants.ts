@@ -7,6 +7,8 @@ export const STATUS = {
     0: 'Stay cautious !!!',
     1: 'Connected',
     2: 'Strongly Connected',
+  3: 'No analysis required',
+    4: 'smart contract analysis not present'
 };
   
 

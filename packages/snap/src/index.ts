@@ -75,8 +75,26 @@ export const onTransaction: OnTransactionHandler = async ({
     typeof transaction.data === 'string'
   ) {
     // smart contract
+      insightPanel.push(heading(`Status : ${STATUS[4]}`));
+      insightPanel.push(divider());
+      insightPanel.push(text('We are yet to launch smart contract interaction analysis'));
+      return {
+        content: panel(insightPanel),
+        // severity: SeverityLevel.Critical,
+      };
   } else {
     // EOA interaction
+
+    if (transaction.from == transaction.to) {
+      insightPanel.push(heading(`Status : ${STATUS[3]}`));
+      insightPanel.push(divider());
+      insightPanel.push(text("same address transfer. so analysis required"))
+      return {
+        content: panel(insightPanel),
+        // severity: SeverityLevel.Critical,
+      };
+    }
+
     ({ connectionScore, descriptions } = await processEOA(variables))
 
       if (connectionScore == 1) {
