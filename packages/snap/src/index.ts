@@ -59,14 +59,6 @@ export const onTransaction: OnTransactionHandler = async ({
   transactionOrigin,
 }) => {
 
-  const driveFrom = 'betashop.eth';
-  const driveTo = 'ipeciura.eth';
-
-  // const variables = {
-  //   from: driveFrom,
-  //   to: driveTo,
-  // };
-
   const variables = {
     from: transaction.from,
     to: transaction.to,
@@ -86,35 +78,41 @@ export const onTransaction: OnTransactionHandler = async ({
   } else {
     // EOA interaction
     ({ connectionScore, descriptions } = await processEOA(variables))
+
+      if (connectionScore == 1) {
+        finalStatus = STATUS[1]; // CONNECTED
+      } else if (connectionScore > 1) {
+        finalStatus = STATUS[2]; // STRONGLY CONNECTED
+      }
+
+      insightPanel.push(heading(`Status : ${finalStatus}`));
+      insightPanel.push(divider());
+
+      for (let i = 0; i < descriptions.length; i++) {
+        const description = descriptions[i];
+        insightPanel.push(description);
+      }
+
+      // no connection found
+      if (descriptions.length == 0) {
+        insightPanel.push(
+          text(FAILURE_MESSAGES_TO_USER.NO_TRANSFER_HISTORY_FOUND),
+        );
+        insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_COMMON_FOLLOWERS));
+        insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_RECEIVER_HISTORY));
+        insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_FOLLOW_EACH_OTHER));
+        insightPanel.push(
+          text(FAILURE_MESSAGES_TO_USER.NO_RECEIVER_NON_VIRTUAL_POAP),
+        );
+      }
+
+      return {
+        content: panel(insightPanel),
+        // severity: SeverityLevel.Critical,
+      };
+
   }
 
-  if (connectionScore == 1) {
-    finalStatus = STATUS[1] // CONNECTED
-  } else if (connectionScore > 1) {
-    finalStatus = STATUS[2]; // STRONGLY CONNECTED
-  } 
-
-  insightPanel.push(heading(`Status : ${finalStatus}`));
-  insightPanel.push(divider());
-
-  for (let i = 0; i < descriptions.length; i++) {
-    const description = descriptions[i];
-    insightPanel.push(description);
-  }
-
-  // no connection found
-  if (descriptions.length == 0) {
-    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_TRANSFER_HISTORY_FOUND))
-    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_COMMON_FOLLOWERS))
-    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_RECEIVER_HISTORY))
-    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_FOLLOW_EACH_OTHER))
-    insightPanel.push(text(FAILURE_MESSAGES_TO_USER.NO_RECEIVER_NON_VIRTUAL_POAP))
-  }
-
-  return {
-    content: panel(insightPanel),
-    // severity: SeverityLevel.Critical,
-  };
 };
 
 const processEOA = async(
